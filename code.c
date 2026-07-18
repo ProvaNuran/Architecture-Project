@@ -17,16 +17,15 @@ typedef struct {
     int LRU_counter;
 } CacheLine;
 
+/* Baseline: ONE shared L3 cache, no per-core way partitioning.
+   Every core competes for all NUM_WAYS ways in every set. */
 CacheLine L3_cache[NUM_SETS][NUM_WAYS];
-int partition[NUM_CORES] = {2, 2, 2, 2};
 int hits[NUM_CORES] = {0};
 int misses[NUM_CORES] = {0};
 pthread_mutex_t cache_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 void* core_function(void* arg) {
     int core_id = (int)(uintptr_t)arg;
-    int ways_start = core_id * partition[core_id];
-    int ways_end = ways_start + partition[core_id];
     int local_hits = 0;
     int local_misses = 0;
 
@@ -39,7 +38,8 @@ void* core_function(void* arg) {
 
             pthread_mutex_lock(&cache_mutex);
 
-            for (int way = ways_start; way < ways_end; way++) {
+            /* Search ALL ways in the set (shared cache, no partition) */
+            for (int way = 0; way < NUM_WAYS; way++) {
                 if (L3_cache[set_index][way].valid &&
                     L3_cache[set_index][way].tag == tag) {
                     local_hits++;
@@ -53,7 +53,7 @@ void* core_function(void* arg) {
                 local_misses++;
                 int replace_way = -1;
                 int max_LRU = -1;
-                for (int way = ways_start; way < ways_end; way++) {
+                for (int way = 0; way < NUM_WAYS; way++) {
                     if (!L3_cache[set_index][way].valid) {
                         replace_way = way;
                         break;
@@ -114,7 +114,7 @@ int main() {
                i, hits[i], misses[i],
                (double)hits[i] / (hits[i] + misses[i]) * 100);
     }
-    printf("Total: Hits = %d, Misses = %d, Overall Hit Rate = %.2f%%\n",
+    printf("Total (SHARED, no partition): Hits = %d, Misses = %d, Overall Hit Rate = %.2f%%\n",
            total_hits, total_misses,
            (double)total_hits / (total_hits + total_misses) * 100);
     return 0;
