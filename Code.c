@@ -139,7 +139,7 @@ int main() {
            total_hits, total_misses,
            (double)total_hits / (total_hits + total_misses) * 100);
 
-    return 0;
+   return 0;
 }
 
 
