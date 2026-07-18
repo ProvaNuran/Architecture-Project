@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-
+#include <pthread.h>
 #include <time.h>
 #include <stdint.h>
 
@@ -139,7 +139,7 @@ int main() {
            total_hits, total_misses,
            (double)total_hits / (total_hits + total_misses) * 100);
 
-    return 0;
+Â Â Â Â returnÂ 0;
 }
 
 
